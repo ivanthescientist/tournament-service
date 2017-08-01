@@ -116,9 +116,15 @@ func JoinTournamentHandler(response http.ResponseWriter, rawRequest *http.Reques
 	}
 
 	// Actual work here
-	// FETCH tournament info for further use
+	
+	// Start transaction
+	// UPDATE players AS pl LEFT JOIN tournaments AS tr ON pl.id = tr.winner SET balance = balance - amount WHERE
+	// pl.balance > amount AND tr.winner IS NULL
+	// Check if affected rows == number of players
 	// INSERT INTO tournament_records VALUES (... generated set of values ...)
-	// UPDATE players SET balance-value;
+	// Check if affected rows == number of players
+	// If rows number match - commit
+	// rollback and 401 if not
 	fmt.Println(queryMap)
 
 	response.WriteHeader(http.StatusOK)
@@ -140,6 +146,12 @@ func ResultTournamentHandler(response http.ResponseWriter, rawRequest *http.Requ
 	}
 
 	// Actual work here
+	// SELECT * FROM tournament_participants WHERE parent_id = winnerId
+	// UPDATE players SET balance + amount
+	// check if affected rows == number of players
+	// UPDATE tournaments SET winner = playerId WHERE winner IS NULL
+	// check if affected rows = 1
+	// rollback and 401 if doesn't match
 	fmt.Println(request)
 
 	response.WriteHeader(http.StatusOK)
@@ -165,6 +177,7 @@ func BalanceHandler(response http.ResponseWriter, rawRequest *http.Request) {
 	}
 
 	// Actual work here
+	// SELECT balance FROM players - simple
 	fmt.Println(queryMap)
 
 	response.WriteHeader(http.StatusOK)
@@ -173,5 +186,8 @@ func BalanceHandler(response http.ResponseWriter, rawRequest *http.Request) {
 func ResetHandler(response http.ResponseWriter, request *http.Request) {
 
 	// Actual work here
+	// TRUNCATE TABLE tournaments;
+	// TRUNCATE TABLE players;
+	// TRUNCATE TABLE tournament_participants
 	response.WriteHeader(http.StatusOK)
 }
