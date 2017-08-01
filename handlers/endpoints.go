@@ -33,6 +33,8 @@ func FundHandler(response http.ResponseWriter, rawRequest *http.Request) {
     }
 
 	// Actual work here
+	// Create player with balance - INSERT player ON DUPLICATE KEY UPDATE WHERE
+
 	fmt.Println(queryMap)
 
     response.WriteHeader(http.StatusOK)
@@ -59,6 +61,7 @@ func TakeHandler(response http.ResponseWriter, rawRequest *http.Request) {
 	}
 
 	// Actual work here
+	// Withdraw amount of player balance - UPDATE WHERE player = id SET balance = MAX(balance - value, 0)
 	fmt.Println(queryMap)
 
 	response.WriteHeader(http.StatusOK)
@@ -85,6 +88,7 @@ func AnnounceTournamentHandler(response http.ResponseWriter, rawRequest *http.Re
 	}
 
 	// Actual work here
+	// INSERT tournament INTO tournaments - simple
 	fmt.Println(queryMap)
 
 	response.WriteHeader(http.StatusOK)
@@ -112,6 +116,9 @@ func JoinTournamentHandler(response http.ResponseWriter, rawRequest *http.Reques
 	}
 
 	// Actual work here
+	// FETCH tournament info for further use
+	// INSERT INTO tournament_records VALUES (... generated set of values ...)
+	// UPDATE players SET balance-value;
 	fmt.Println(queryMap)
 
 	response.WriteHeader(http.StatusOK)
