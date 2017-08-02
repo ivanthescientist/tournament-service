@@ -10,3 +10,10 @@ services:
     restart: always
     volumes:
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+  tournament_service:
+    container_name: tservice
+    image: "ivanthescientist/tournament_service"
+    network_mode: host
+    restart: always
+    depends_on:
+      - mysql

@@ -2,16 +2,15 @@ package main
 
 import (
 	"net/http"
-	"github.com/ivanthescientist/tournament_service/handlers"
+	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/ivanthescientist/tournament_service/handlers"
 	"github.com/ivanthescientist/tournament_service/database"
 	"github.com/ivanthescientist/tournament_service/model"
-	"fmt"
 	"github.com/ivanthescientist/tournament_service/dtos"
 )
 
 func main() {
-
 	router := mux.NewRouter()
 	router.HandleFunc("/", handlers.IndexHandler).Methods("GET")
 	router.HandleFunc("/fund", handlers.FundHandler).Methods("GET")
@@ -24,6 +23,7 @@ func main() {
 
 	database.Init()
 
+	// Dummy data
 	model.ResetDatabase()
 	model.FundPlayer("P1", 400)
 	model.FundPlayer("P2", 400)
