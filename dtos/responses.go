@@ -4,6 +4,6 @@ import "github.com/ivanthescientist/tournament_service/validators"
 
 type PlayerBalanceResponse struct {
 	validators.ValidatedDTO
-	playerId string
-	balance  int64
+	PlayerId string `json:"playerId"`
+	Balance  int64  `json:"balance"`
 }

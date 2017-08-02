@@ -5,5 +5,8 @@ services:
     image: "mysql:5.7"
     environment:
       MYSQL_ROOT_PASSWORD: "1111"
+      MYSQL_DATABASE: "tournament_db"
     network_mode: host
     restart: always
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
