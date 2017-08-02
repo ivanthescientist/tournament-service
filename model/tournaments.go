@@ -4,6 +4,7 @@ import (
 	"log"
 	"github.com/ivanthescientist/tournament_service/database"
 	"database/sql"
+	"github.com/ivanthescientist/tournament_service/dtos"
 )
 
 func CreateTournament(id string, deposit int64) bool {
@@ -82,12 +83,57 @@ func JoinTournament(tournamentId string, playerId string, backerIds []string) bo
 	return true
 }
 
-func ResultTournament(tournamentId string, winners []map[string]int64) bool {
-	//tx, err := database.DB.Begin()
-	//
-	//
-	//
-	//tx.Commit()
+func ResultTournament(tournamentId string, winners []dtos.TournamentWinner) bool {
+	tx, err := database.DB.Begin()
+
+	if err != nil {
+		log.Println("Failed to open transaction: ", err.Error())
+		return false
+	}
+
+	for _, winner := range winners {
+		res, err := tx.Exec("UPDATE tournaments SET winner = ? WHERE id = ? AND winner IS NULL", winner.PlayerId, tournamentId)
+		if getRowsAffected(res, err) != 1 {
+			tx.Rollback()
+			return false
+		}
+
+		var participants []string
+		rows, err := tx.Query("SELECT participantId FROM tournament_participants WHERE parentId = ?", winner.PlayerId)
+
+		if err != nil {
+			tx.Rollback()
+			return false
+		}
+
+		for rows.Next() {
+			var participantId string
+			rows.Scan(&participantId)
+			participants = append(participants, participantId)
+		}
+		rows.Close()
+
+		var perPlayerWinnings = (winner.Prize) / int64(len(participants))
+		var winningsRemainder = perPlayerWinnings* int64(len(participants)) - winner.Prize
+
+		res, err = tx.Exec(" UPDATE players AS a" +
+						"INNER JOIN tournament_participants AS b ON a.id = b.participantId " +
+						"SET balance = balance + ? " +
+						"WHERE b.parentId = ?;", perPlayerWinnings, winner.PlayerId)
+
+		if getRowsAffected(res, err) != int64(len(participants)) {
+			tx.Rollback()
+			return false
+		}
+
+		res, err = tx.Exec("UPDATE players SET balance = balance + ? WHERE id = ?;", winningsRemainder, winner.PlayerId)
+		if getRowsAffected(res, err) != int64(len(participants)) {
+			tx.Rollback()
+			return false
+		}
+	}
+
+	tx.Commit()
 	return true
 }
 
