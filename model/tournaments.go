@@ -116,7 +116,7 @@ func ResultTournament(tournamentId string, winners []dtos.TournamentWinner) bool
 		var perPlayerWinnings = (winner.Prize) / int64(len(participants))
 		var winningsRemainder = perPlayerWinnings* int64(len(participants)) - winner.Prize
 
-		res, err = tx.Exec(" UPDATE players AS a" +
+		res, err = tx.Exec(" UPDATE players AS a " +
 						"INNER JOIN tournament_participants AS b ON a.id = b.participantId " +
 						"SET balance = balance + ? " +
 						"WHERE b.parentId = ?;", perPlayerWinnings, winner.PlayerId)
@@ -127,7 +127,7 @@ func ResultTournament(tournamentId string, winners []dtos.TournamentWinner) bool
 		}
 
 		res, err = tx.Exec("UPDATE players SET balance = balance + ? WHERE id = ?;", winningsRemainder, winner.PlayerId)
-		if getRowsAffected(res, err) != int64(len(participants)) {
+		if getRowsAffected(res, err) != 1 {
 			tx.Rollback()
 			return false
 		}

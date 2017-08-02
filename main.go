@@ -49,7 +49,7 @@ func main() {
 	model.ResultTournament("T1", []dtos.TournamentWinner{
 		dtos.TournamentWinner{
 			PlayerId:"P2",
-			Prize: 2000,
+			Prize: 200,
 		},
 	})
 
