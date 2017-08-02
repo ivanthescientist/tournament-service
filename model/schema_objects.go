@@ -11,8 +11,7 @@ type Tournament struct {
 }
 
 type TournamentParticipant struct {
-	tournament Tournament
-	deposit int64 // value deposited, to log transaction
-	participant Player
-	parent Player // references self for original player
+	TournamentId string
+	participantId string
+	parentId string // references self for original player
 }
