@@ -9,6 +9,12 @@ import (
 
 func CreateTournament(id string, deposit int64) bool {
 	tx, err := database.DB.Begin()
+
+	if err != nil {
+		log.Println("Failed to open transaction: ", err.Error())
+		return false
+	}
+
 	stmt, err := tx.Prepare("INSERT INTO `tournaments` (`id`, `deposit`) VALUES (?,?);")
 	res, err := stmt.Exec(id, deposit)
 	defer stmt.Close()
@@ -29,6 +35,12 @@ func CreateTournament(id string, deposit int64) bool {
 
 func JoinTournament(tournamentId string, playerId string, backerIds []string) bool {
 	tx, err := database.DB.Begin()
+
+	if err != nil {
+		log.Println("Failed to open transaction: ", err.Error())
+		return false
+	}
+
 	var tournamentDeposit int64
 	var perPlayerDeposit int64
 	var players []string = append(backerIds, playerId)
@@ -124,7 +136,7 @@ func ResultTournament(tournamentId string, winners []dtos.TournamentWinner) bool
 	}
 	rows.Close()
 
-	var perPlayerWinnings = (winner.Prize) / int64(len(participants))
+	var perPlayerWinnings = (winner.Prize) / max(1, int64(len(participants)))
 	var winningsRemainder = winner.Prize - perPlayerWinnings * int64(len(participants))
 
 	res, err = tx.Exec(" UPDATE players AS a " +
@@ -138,11 +150,13 @@ func ResultTournament(tournamentId string, winners []dtos.TournamentWinner) bool
 		return false
 	}
 
-	res, err = tx.Exec("UPDATE players SET balance = balance + ? WHERE id = ?;", winningsRemainder, winner.PlayerId)
-	if getRowsAffected(res, err) != 1 {
-		log.Print("Failed to add winnings remainder to main winner's balance: ", err)
-		tx.Rollback()
-		return false
+	if winningsRemainder != 0 {
+		res, err = tx.Exec("UPDATE players SET balance = balance + ? WHERE id = ?;", winningsRemainder, winner.PlayerId)
+		if getRowsAffected(res, err) != 1 {
+			log.Print("Failed to add winnings remainder to main winner's balance: ", err)
+			tx.Rollback()
+			return false
+		}
 	}
 
 	tx.Commit()
@@ -157,4 +171,12 @@ func getRowsAffected(res sql.Result, err error) int64 {
 	rows, _ := res.RowsAffected()
 
 	return rows
+}
+
+func max(a int64, b int64) int64 {
+	if a > b {
+		return a
+	} else {
+		return b
+	}
 }

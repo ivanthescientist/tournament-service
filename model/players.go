@@ -7,6 +7,12 @@ import (
 
 func FundPlayer(id string, points int64) bool {
 	tx, err := database.DB.Begin()
+
+	if tx == nil || err != nil {
+		log.Println("Failed to start transaction: ", err.Error())
+		return false
+	}
+
 	stmt, err := tx.Prepare("INSERT INTO `players` (`id`, `balance`) VALUES (?, ?) " +
 		"ON DUPLICATE KEY UPDATE `balance` = `balance` + VALUES(`balance`);")
 	res, err := stmt.Exec(id, points)
@@ -28,6 +34,12 @@ func FundPlayer(id string, points int64) bool {
 
 func WithdrawFromPlayer(id string, points int64) bool {
 	tx, err := database.DB.Begin()
+
+	if tx == nil || err != nil {
+		log.Println("Failed to start transaction: ", err.Error())
+		return false
+	}
+
 	stmt, err := tx.Prepare("UPDATE `players` SET `balance` = `balance` - ? WHERE id = ? AND balance > ?;")
 	res, err := stmt.Exec(points, id, points)
 	defer stmt.Close()
