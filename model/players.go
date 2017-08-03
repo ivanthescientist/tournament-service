@@ -39,7 +39,7 @@ func WithdrawFromPlayer(id string, points int64) bool {
 			return true
 		}
 	} else {
-		log.Print("Unsuccessful player fund: ", err.Error())
+		log.Print("Unsuccessful player withdrawal: ", err.Error())
 	}
 
 	tx.Rollback()

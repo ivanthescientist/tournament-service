@@ -6,6 +6,7 @@ import (
 	"github.com/ivanthescientist/tournament_service/dtos"
 	"encoding/json"
 	"github.com/ivanthescientist/tournament_service/model"
+	"log"
 )
 
 func IndexHandler(response http.ResponseWriter, request *http.Request) {
@@ -17,6 +18,7 @@ func FundHandler(response http.ResponseWriter, rawRequest *http.Request) {
 	err := rawRequest.ParseForm();
 
 	if err != nil {
+		log.Print("Failed to parse request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -28,6 +30,7 @@ func FundHandler(response http.ResponseWriter, rawRequest *http.Request) {
 
 
     if !request.IsValid() {
+	    log.Print("Invalid request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
     }
@@ -43,6 +46,7 @@ func TakeHandler(response http.ResponseWriter, rawRequest *http.Request) {
 	err := rawRequest.ParseForm();
 
 	if err != nil {
+		log.Print("Failed to parse request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -54,6 +58,7 @@ func TakeHandler(response http.ResponseWriter, rawRequest *http.Request) {
 
 
 	if !request.IsValid() {
+		log.Print("Invalid request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -69,6 +74,7 @@ func AnnounceTournamentHandler(response http.ResponseWriter, rawRequest *http.Re
 	err := rawRequest.ParseForm();
 
 	if err != nil {
+		log.Print("Failed to parse request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -80,6 +86,7 @@ func AnnounceTournamentHandler(response http.ResponseWriter, rawRequest *http.Re
 
 
 	if !request.IsValid() {
+		log.Print("Invalid request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -95,6 +102,7 @@ func JoinTournamentHandler(response http.ResponseWriter, rawRequest *http.Reques
 	err := rawRequest.ParseForm();
 
 	if err != nil {
+		log.Print("Failed to parse request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -107,6 +115,7 @@ func JoinTournamentHandler(response http.ResponseWriter, rawRequest *http.Reques
 
 
 	if !request.IsValid() {
+		log.Print("Invalid request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -123,11 +132,13 @@ func ResultTournamentHandler(response http.ResponseWriter, rawRequest *http.Requ
 	err := json.NewDecoder(rawRequest.Body).Decode(&request)
 
 	if err != nil {
+		log.Print("Failed to parse request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if !request.IsValid() {
+		log.Print("Invalid request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -143,6 +154,7 @@ func BalanceHandler(response http.ResponseWriter, rawRequest *http.Request) {
 	err := rawRequest.ParseForm();
 
 	if err != nil {
+		log.Print("Failed to parse request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -153,6 +165,7 @@ func BalanceHandler(response http.ResponseWriter, rawRequest *http.Request) {
 
 
 	if !request.IsValid() {
+		log.Print("Invalid request: ", err)
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}

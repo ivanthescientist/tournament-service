@@ -36,6 +36,7 @@ func JoinTournament(tournamentId string, playerId string, backerIds []string) bo
 	rows, err := tx.Query("SELECT deposit FROM tournaments WHERE id = ?;", tournamentId)
 
 	if !rows.Next() {
+		log.Printf("No tournament with ID %s found: %s", tournamentId, err.Error())
 		tx.Rollback()
 		return false
 	}
@@ -46,10 +47,11 @@ func JoinTournament(tournamentId string, playerId string, backerIds []string) bo
 
 	// First player gets charged a little bit more and gets rewarded a little more as well.
 	var depositRemainder = perPlayerDeposit * int64(len(players)) - tournamentDeposit
-	var firstPlayerSum = perPlayerDeposit + depositRemainder
+	var firstPlayerSum = perPlayerDeposit - depositRemainder
 
 	res, err := tx.Exec("UPDATE players SET balance = balance - ? WHERE id = ? AND balance >= ?;", firstPlayerSum, playerId, firstPlayerSum)
 	if getRowsAffected(res, err) != 1 {
+		log.Println("Failed to update joining player balance: ", err)
 		tx.Rollback()
 		return false
 	}
@@ -61,6 +63,7 @@ func JoinTournament(tournamentId string, playerId string, backerIds []string) bo
 			perPlayerDeposit)
 
 		if getRowsAffected(res, err) != 1 {
+			log.Println("Failed to update backing players balances: ", err)
 			tx.Rollback()
 			return false
 		}
@@ -73,7 +76,7 @@ func JoinTournament(tournamentId string, playerId string, backerIds []string) bo
 			playerId)
 
 		if getRowsAffected(res, err) != 1 {
-			log.Print(err)
+			log.Print("Failed to register participants: ", err)
 			tx.Rollback()
 			return false
 		}
@@ -91,46 +94,55 @@ func ResultTournament(tournamentId string, winners []dtos.TournamentWinner) bool
 		return false
 	}
 
-	for _, winner := range winners {
-		res, err := tx.Exec("UPDATE tournaments SET winner = ? WHERE id = ? AND winner IS NULL", winner.PlayerId, tournamentId)
-		if getRowsAffected(res, err) != 1 {
-			tx.Rollback()
-			return false
-		}
+	if len(winners) < 1 {
+		log.Println("No winners supplied.")
+		return false
+	}
 
-		var participants []string
-		rows, err := tx.Query("SELECT participantId FROM tournament_participants WHERE parentId = ?", winner.PlayerId)
+	winner := winners[0]
 
-		if err != nil {
-			tx.Rollback()
-			return false
-		}
+	res, err := tx.Exec("UPDATE tournaments SET winner = ? WHERE id = ? AND winner IS NULL", winner.PlayerId, tournamentId)
+	if getRowsAffected(res, err) != 1 {
+		log.Print("Failed to update tournament: ", err)
+		tx.Rollback()
+		return false
+	}
 
-		for rows.Next() {
-			var participantId string
-			rows.Scan(&participantId)
-			participants = append(participants, participantId)
-		}
-		rows.Close()
+	var participants []string
+	rows, err := tx.Query("SELECT participantId FROM tournament_participants WHERE parentId = ?", winner.PlayerId)
 
-		var perPlayerWinnings = (winner.Prize) / int64(len(participants))
-		var winningsRemainder = perPlayerWinnings* int64(len(participants)) - winner.Prize
+	if err != nil {
+		log.Printf("No participants for tournament %s found: %s", tournamentId, err)
+		tx.Rollback()
+		return false
+	}
 
-		res, err = tx.Exec(" UPDATE players AS a " +
-						"INNER JOIN tournament_participants AS b ON a.id = b.participantId " +
-						"SET balance = balance + ? " +
-						"WHERE b.parentId = ?;", perPlayerWinnings, winner.PlayerId)
+	for rows.Next() {
+		var participantId string
+		rows.Scan(&participantId)
+		participants = append(participants, participantId)
+	}
+	rows.Close()
 
-		if getRowsAffected(res, err) != int64(len(participants)) {
-			tx.Rollback()
-			return false
-		}
+	var perPlayerWinnings = (winner.Prize) / int64(len(participants))
+	var winningsRemainder = winner.Prize - perPlayerWinnings * int64(len(participants))
 
-		res, err = tx.Exec("UPDATE players SET balance = balance + ? WHERE id = ?;", winningsRemainder, winner.PlayerId)
-		if getRowsAffected(res, err) != 1 {
-			tx.Rollback()
-			return false
-		}
+	res, err = tx.Exec(" UPDATE players AS a " +
+					"INNER JOIN tournament_participants AS b ON a.id = b.participantId " +
+					"SET balance = balance + ? " +
+					"WHERE b.parentId = ?;", perPlayerWinnings, winner.PlayerId)
+
+	if getRowsAffected(res, err) != int64(len(participants)) {
+		log.Print("Failed to update tournament participant balances: ", err)
+		tx.Rollback()
+		return false
+	}
+
+	res, err = tx.Exec("UPDATE players SET balance = balance + ? WHERE id = ?;", winningsRemainder, winner.PlayerId)
+	if getRowsAffected(res, err) != 1 {
+		log.Print("Failed to add winnings remainder to main winner's balance: ", err)
+		tx.Rollback()
+		return false
 	}
 
 	tx.Commit()
