@@ -45,7 +45,10 @@ func JoinTournament(tournamentId string, playerId string, backerIds []string) bo
 	var perPlayerDeposit int64
 	var players []string = append(backerIds, playerId)
 
-	rows, err := tx.Query("SELECT deposit FROM tournaments WHERE id = ?;", tournamentId)
+	tx.Exec("SELECT * FROM tournaments WHERE id = ? FOR UPDATE", tournamentId)
+	tx.Exec("SELECT * FROM players WHERE id IN (?) FOR UPDATE", players)
+
+	rows, err := tx.Query("SELECT deposit FROM tournaments WHERE id = ? FOR UPDATE;", tournamentId)
 
 	if !rows.Next() {
 		log.Printf("No tournament with ID %s found: %s", tournamentId, err.Error())
@@ -110,6 +113,9 @@ func ResultTournament(tournamentId string, winners []dtos.TournamentWinner) bool
 		log.Println("No winners supplied.")
 		return false
 	}
+
+	tx.Exec("SELECT * FROM tournaments WHERE id = ? FOR UPDATE", tournamentId)
+	tx.Exec("SELECT * FROM players WHERE id IN (SELECT id FROM tournament_participants WHERE tournament_id = ?) FOR UPDATE", tournamentId)
 
 	winner := winners[0]
 
